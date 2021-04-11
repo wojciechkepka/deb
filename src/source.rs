@@ -1,3 +1,5 @@
+use crate::DebControlError;
+
 use pkgspec::SpecStruct;
 use sailfish::TemplateOnce;
 
@@ -63,6 +65,18 @@ pub struct SourceDebControl {
     provides: Vec<String>,
     replaces: Vec<String>,
     enchances: Vec<String>,
+}
+
+impl SourceDebControl {
+    /// Renders this DEB/control spec by cloning the spec
+    pub fn render(&self) -> Result<String, DebControlError> {
+        self.clone().render_once().map_err(DebControlError::from)
+    }
+
+    /// Renders this DEB/control spec by taking ownership of the instance
+    pub fn render_owned(self) -> Result<String, DebControlError> {
+        self.render_once().map_err(DebControlError::from)
+    }
 }
 
 #[cfg(test)]

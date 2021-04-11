@@ -18,7 +18,7 @@ impl DebControlBuilder {
     where
         S: Into<String>,
     {
-        SourceDebControl::builder().source(name)
+        SourceDebControl::builder().package(name)
     }
 
     pub fn binary_package_builder<S>(name: S) -> BinaryDebControlBuilder
