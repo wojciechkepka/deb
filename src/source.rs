@@ -1,9 +1,7 @@
-use crate::DebControlError;
-
-use paste::paste;
+use pkgspec::SpecStruct;
 use sailfish::TemplateOnce;
 
-#[derive(Clone, Debug, Default, TemplateOnce, PartialEq)]
+#[derive(Clone, Debug, Default, TemplateOnce, PartialEq, SpecStruct)]
 #[template(path = "source.stpl")]
 pub struct SourceDebControl {
     /// The name of the binary package.
@@ -65,84 +63,6 @@ pub struct SourceDebControl {
     provides: Vec<String>,
     replaces: Vec<String>,
     enchances: Vec<String>,
-}
-
-impl SourceDebControl {
-    pub fn builder<S>(name: S) -> SourceDebControlBuilder
-    where
-        S: Into<String>,
-    {
-        let builder = SourceDebControlBuilder::new();
-        builder.package(name)
-    }
-
-    /// Renders this DEB/control spec by cloning the spec
-    pub fn render(&self) -> Result<String, DebControlError> {
-        self.clone().render_once().map_err(DebControlError::from)
-    }
-
-    /// Renders this DEB/control spec by taking ownership of the instance
-    pub fn render_owned(self) -> Result<String, DebControlError> {
-        self.render_once().map_err(DebControlError::from)
-    }
-}
-
-#[derive(Default, Debug)]
-pub struct SourceDebControlBuilder {
-    spec: SourceDebControl,
-}
-
-impl SourceDebControlBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn build(self) -> SourceDebControl {
-        self.spec
-    }
-
-    gen_string_method!(
-        package,
-        source,
-        maintainer,
-        standards_version,
-        architecture,
-        description
-    );
-
-    gen_bool_method!(essential);
-
-    gen_option_method!(
-        uploaders,
-        section,
-        priority,
-        installed_size,
-        homepage,
-        built_using,
-        package_type,
-        testsuite,
-        rules_requires_root,
-        arch,
-        bzr,
-        cvs,
-        darcs,
-        git,
-        hg,
-        mtn,
-        svn
-    );
-
-    gen_vec_method!(
-        pre_depends,
-        depends,
-        recommends,
-        suggests,
-        breaks,
-        conflicts,
-        provides,
-        replaces,
-        enchances
-    );
 }
 
 #[cfg(test)]

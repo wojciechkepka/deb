@@ -1,5 +1,3 @@
-#[macro_use]
-mod macros;
 pub mod binary;
 pub mod source;
 
@@ -20,13 +18,13 @@ impl DebControlBuilder {
     where
         S: Into<String>,
     {
-        SourceDebControl::builder(name)
+        SourceDebControl::builder().source(name)
     }
 
     pub fn binary_package_builder<S>(name: S) -> BinaryDebControlBuilder
     where
         S: Into<String>,
     {
-        BinaryDebControl::builder(name)
+        BinaryDebControl::builder().package(name)
     }
 }
