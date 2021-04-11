@@ -1,0 +1,22 @@
+Package:        <%- package %>
+Version:        <%- version %>
+Architecture:   <%- architecture %>
+Maintainer:     <%- maintainer %>
+Description:    <%- description %>
+Essential:      <% if essential { %>yes<% } else { %>no<% } %>
+<% if let Some(source)          = source          { %>Source:         <%- source %><% } %>
+<% if let Some(section)         = section         { %>Section:        <%- section %><% } %>
+<% if let Some(priority)        = priority        { %>Priority:       <%- priority %><% } %>
+<% if let Some(installed_size)  = installed_size  { %>Installed-Size: <%- installed_size %><% } %>
+<% if let Some(homepage)        = homepage        { %>Homepage:       <%- homepage %><% } %>
+<% if let Some(built_using)     = built_using     { %>Built-Using:    <%- built_using %><% } %>
+
+<% if !pre_depends.is_empty() { %><% for pre_depend in pre_depends.iter() { %>Pre-Depends: <%- pre_depend %><%- "\n" %><% } %><% } %>
+<% if !depends.is_empty() { %><% for depend in depends.iter()             { %>Depends: <%- depend %><%- "\n" %><% } %><% } %>
+<% if !recommends.is_empty() { %><% for recommend in recommends.iter()    { %>Recommends: <%- recommend %><%- "\n" %><% } %><% } %>
+<% if !suggests.is_empty() { %><% for suggest in suggests.iter()          { %>Suggests: <%- suggest %><%- "\n" %><% } %><% } %>
+<% if !breaks.is_empty() { %><% for _break in breaks.iter()               { %>Breaks: <%- _break %><%- "\n" %><% } %><% } %>
+<% if !conflicts.is_empty() { %><% for conflict in conflicts.iter()       { %>Conflicts: <%- conflict %><%- "\n" %><% } %><% } %>
+<% if !provides.is_empty() { %><% for provide in provides.iter()          { %>Provides: <%- provide %><%- "\n" %><% } %><% } %>
+<% if !replaces.is_empty() { %><% for replace in replaces.iter()          { %>Replaces: <%- replace %><%- "\n" %><% } %><% } %>
+<% if !enchances.is_empty() { %><% for enchance in enchances.iter()       { %>Enchances: <%- enchance %><%- "\n" %><% } %><% } %>

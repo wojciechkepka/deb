@@ -1,0 +1,12 @@
+[package]
+name = "deb-control"
+description = "Crate for DEB/control file generation"
+version = "0.2.0"
+authors = ["wojciechkepka <wojciech@wkepka.dev>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+sailfish = "0.3"
+paste = "1"
+thiserror = "1"
