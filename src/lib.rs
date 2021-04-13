@@ -1,3 +1,4 @@
+#![feature(extended_key_value_attributes)]
 pub mod binary;
 pub mod source;
 
