@@ -9,7 +9,7 @@ use sailfish::TemplateOnce;
 pub struct BinaryDebControl {
     /// The name of the binary package.
     package: String,
-    /// The version number of a package. The format is: [epoch:]upstream_version[-debian_revision].
+    /// The version number of a package. The format is: \[epoch:\]upstream_version\[-debian_revision\].
     version: String,
     /// Depending on context and the control file used, the Architecture field can include the following sets of values:
     ///  - A unique single word identifying a Debian machine architecture
