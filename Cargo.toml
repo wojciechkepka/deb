@@ -10,4 +10,4 @@ license = "MIT"
 sailfish = "0.3"
 paste = "1"
 thiserror = "1"
-pkgspec = { git = "https://github.com/wojciechkepka/pkgspec" }
+pkgspec = { git = "https://github.com/wojciechkepka/pkgspec", branch = "master" }
