@@ -2,6 +2,8 @@ use crate::DebControlError;
 
 use pkgspec::SpecStruct;
 use sailfish::TemplateOnce;
+use std::fs;
+use std::path::Path;
 
 #[derive(Clone, Debug, Default, TemplateOnce, PartialEq, SpecStruct)]
 #[template(path = "binary.stpl")]
@@ -48,6 +50,23 @@ pub struct BinaryDebControl {
     provides: Vec<String>,
     replaces: Vec<String>,
     enchances: Vec<String>,
+}
+
+impl BinaryDebControl {
+    pub fn render(&self) -> Result<String, DebControlError> {
+        self.clone().render_owned()
+    }
+
+    pub fn render_owned(self) -> Result<String, DebControlError> {
+        self.render_once().map_err(DebControlError::from)
+    }
+
+    pub fn save_to<P>(&self, path: P) -> Result<(), DebControlError>
+    where
+        P: AsRef<Path>,
+    {
+        fs::write(path, self.render()?).map_err(DebControlError::from)
+    }
 }
 
 #[cfg(test)]
