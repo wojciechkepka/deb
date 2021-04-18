@@ -58,7 +58,18 @@ impl BinaryDebControl {
     }
 
     pub fn render_owned(self) -> Result<String, DebControlError> {
-        self.render_once().map_err(DebControlError::from)
+        self.render_once()
+            .map_err(DebControlError::from)
+            .map(|rendered| {
+                rendered.lines().filter(|line| !line.is_empty()).fold(
+                    String::new(),
+                    |mut s, line| {
+                        s.push_str(line);
+                        s.push('\n');
+                        s
+                    },
+                )
+            })
     }
 
     pub fn save_to<P>(&self, path: P) -> Result<(), DebControlError>
@@ -111,30 +122,19 @@ Description:    crate for DEB/control file generation
 Essential:      yes
 Source:         package.tar.gz
 Section:        devel
-
-
 Homepage:       https://github.com/wojciechkepka/debcontrol
 Built-Using:    rustc
-
 Pre-Depends: rustc
 Pre-Depends: cargo
-
 Depends: rustc
 Depends: cargo
-
-
-
-
 Conflicts: rustc
 Conflicts: cargo
-
 Provides: rustc
 Provides: cargo
 Provides: debcontrol
-
 Replaces: rustc
 Replaces: cargo
-
 Enchances: rustc
 Enchances: cargo
 "#;
@@ -156,6 +156,7 @@ Enchances: cargo
             .add_enchances_entries(vec!["rustc", "cargo"])
             .add_provides_entries(vec!["debcontrol"])
             .build();
+        dbg!(got.clone().render().unwrap());
 
         assert_eq!(expect, got);
         assert_eq!(OUT, got.render().unwrap());
