@@ -1,13 +1,9 @@
-use crate::DebControlError;
-
 use pkgspec::SpecStruct;
-use sailfish::TemplateOnce;
 use std::fs;
+use std::io;
 use std::path::Path;
 
-#[derive(Clone, Debug, Default, TemplateOnce, PartialEq, SpecStruct)]
-#[template(path = "source.stpl")]
-#[spec_error(DebControlError)]
+#[derive(Clone, Debug, Default, PartialEq, SpecStruct)]
 pub struct SourceDebControl {
     /// The name of the binary package.
     package: String,
@@ -71,19 +67,81 @@ pub struct SourceDebControl {
 }
 
 impl SourceDebControl {
-    pub fn render(&self) -> Result<String, DebControlError> {
-        self.clone().render_owned()
-    }
-
-    pub fn render_owned(self) -> Result<String, DebControlError> {
-        self.render_once().map_err(DebControlError::from)
-    }
-
-    pub fn save_to<P>(&self, path: P) -> Result<(), DebControlError>
+    pub fn save_to<P>(&self, path: P) -> io::Result<()>
     where
         P: AsRef<Path>,
     {
-        fs::write(path, self.render()?).map_err(DebControlError::from)
+        fs::write(path, self.render())
+    }
+
+    pub fn render(&self) -> String {
+        let mut control = format!(
+            r#"Package:             {}
+Source:              {}
+Standards-Version:   {}
+Architecture:        {}
+Maintainer:          {}
+Description:         {}
+Essential:           {}
+"#,
+            &self.package,
+            &self.source,
+            &self.standards_version,
+            &self.architecture,
+            &self.maintainer,
+            &self.description,
+            if self.essential { "yes" } else { "no" }
+        );
+
+        macro_rules! if_some_push {
+            ($field:ident, $fmt:expr) => {
+                if let Some($field) = &self.$field {
+                    control.push_str(&format!($fmt, $field));
+                }
+            };
+        }
+
+        macro_rules! if_not_empty_entries {
+            ($field:ident, $fmt:expr) => {
+                if !self.$field.is_empty() {
+                    for entry in self.$field.iter() {
+                        control.push_str(&format!($fmt, entry));
+                    }
+                }
+            };
+        }
+
+        #[rustfmt::skip]
+        {
+        if_some_push!(uploaders,           "Uploaders:           {}\n");
+        if_some_push!(section,             "Section:             {}\n");
+        if_some_push!(package_type,        "Package-Type:        {}\n");
+        if_some_push!(testsuite,           "Testsuite:           {}\n");
+        if_some_push!(priority,            "Priority:            {}\n");
+        if_some_push!(installed_size,      "Installed-Size:      {}\n");
+        if_some_push!(homepage,            "Homepage:            {}\n");
+        if_some_push!(built_using,         "Built-Using:         {}\n");
+        if_some_push!(rules_requires_root, "Rules-Requires-Root: {}\n");
+        if_some_push!(arch,                "Arch:                {}\n");
+        if_some_push!(bzr,                 "Bzr:                 {}\n");
+        if_some_push!(cvs,                 "Cvs:                 {}\n");
+        if_some_push!(darcs,               "Darcs:               {}\n");
+        if_some_push!(git,                 "Git:                 {}\n");
+        if_some_push!(hg,                  "Hg:                  {}\n");
+        if_some_push!(mtn,                 "Mtn:                 {}\n");
+        if_some_push!(svn,                 "Svn:                 {}\n");
+        if_not_empty_entries!(pre_depends, "Pre-Depends:         {}\n");
+        if_not_empty_entries!(depends,     "Depends:             {}\n");
+        if_not_empty_entries!(recommends,  "Recommends:          {}\n");
+        if_not_empty_entries!(suggests,    "Suggests:            {}\n");
+        if_not_empty_entries!(breaks,      "Breaks:              {}\n");
+        if_not_empty_entries!(conflicts,   "Conflicts:           {}\n");
+        if_not_empty_entries!(provides,    "Provides:            {}\n");
+        if_not_empty_entries!(replaces,    "Replaces:            {}\n");
+        if_not_empty_entries!(enchances,   "Enchances:           {}\n");
+        };
+
+        control
     }
 }
 
@@ -140,32 +198,13 @@ Essential:           yes
 Uploaders:           wojciech@wkepka.dev
 Section:             devel
 Package-Type:        deb
-
-
-
 Homepage:            https://github.com/wojciechkepka/debcontrol
 Built-Using:         rustc
 Rules-Requires-Root: no
-
-
-
-
 Git:                 https://github.com/wojciechkepka/debcontrol/source.tar.gz
-
-
-
-
-
-Depends: rustc
-Depends: cargo
-
-
-
-
-
-Provides: debcontrol
-
-
+Depends:             rustc
+Depends:             cargo
+Provides:            debcontrol
 "#;
         let got = DebControlBuilder::source_package_builder("debcontrol")
             .source("package.tar.gz")
@@ -185,9 +224,9 @@ Provides: debcontrol
             .add_provides_entries(vec!["debcontrol"])
             .build();
 
-        println!("{}", got.render().unwrap());
+        println!("{}", got.render());
 
         assert_eq!(expect, got);
-        assert_eq!(OUT, got.render().unwrap());
+        assert_eq!(OUT, got.render());
     }
 }

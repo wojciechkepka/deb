@@ -1,13 +1,9 @@
-use crate::DebControlError;
-
 use pkgspec::SpecStruct;
-use sailfish::TemplateOnce;
 use std::fs;
+use std::io;
 use std::path::Path;
 
-#[derive(Clone, Debug, Default, TemplateOnce, PartialEq, SpecStruct)]
-#[template(path = "binary.stpl")]
-#[spec_error(DebControlError)]
+#[derive(Clone, Debug, Default, PartialEq, SpecStruct)]
 pub struct BinaryDebControl {
     /// The name of the binary package.
     package: String,
@@ -53,30 +49,66 @@ pub struct BinaryDebControl {
 }
 
 impl BinaryDebControl {
-    pub fn render(&self) -> Result<String, DebControlError> {
-        self.clone().render_owned()
-    }
-
-    pub fn render_owned(self) -> Result<String, DebControlError> {
-        self.render_once()
-            .map_err(DebControlError::from)
-            .map(|rendered| {
-                rendered.lines().filter(|line| !line.is_empty()).fold(
-                    String::new(),
-                    |mut s, line| {
-                        s.push_str(line);
-                        s.push('\n');
-                        s
-                    },
-                )
-            })
-    }
-
-    pub fn save_to<P>(&self, path: P) -> Result<(), DebControlError>
+    pub fn save_to<P>(&self, path: P) -> io::Result<()>
     where
         P: AsRef<Path>,
     {
-        fs::write(path, self.render()?).map_err(DebControlError::from)
+        fs::write(path, self.render())
+    }
+
+    pub fn render(&self) -> String {
+        let mut control = format!(
+            r#"Package:        {}
+Version:        {}
+Architecture:   {}
+Description:    {}
+Essential:      {}
+"#,
+            &self.package,
+            &self.version,
+            &self.architecture,
+            &self.description,
+            if self.essential { "yes" } else { "no" }
+        );
+
+        macro_rules! if_some_push {
+            ($field:ident, $fmt:expr) => {
+                if let Some($field) = &self.$field {
+                    control.push_str(&format!($fmt, $field));
+                }
+            };
+        }
+
+        macro_rules! if_not_empty_entries {
+            ($field:ident, $fmt:expr) => {
+                if !self.$field.is_empty() {
+                    for entry in self.$field.iter() {
+                        control.push_str(&format!($fmt, entry));
+                    }
+                }
+            };
+        }
+
+        #[rustfmt::skip]
+        {
+        if_some_push!(source,              "Source:         {}\n");
+        if_some_push!(section,             "Section:        {}\n");
+        if_some_push!(priority,            "Priority:       {}\n");
+        if_some_push!(installed_size,      "Installed-Size: {}\n");
+        if_some_push!(homepage,            "Homepage:       {}\n");
+        if_some_push!(built_using,         "Built-Using:    {}\n");
+        if_not_empty_entries!(pre_depends, "Pre-Depends:    {}\n");
+        if_not_empty_entries!(depends,     "Depends:        {}\n");
+        if_not_empty_entries!(recommends,  "Recommends:     {}\n");
+        if_not_empty_entries!(suggests,    "Suggests:       {}\n");
+        if_not_empty_entries!(breaks,      "Breaks:         {}\n");
+        if_not_empty_entries!(conflicts,   "Conflicts:      {}\n");
+        if_not_empty_entries!(provides,    "Provides:       {}\n");
+        if_not_empty_entries!(replaces,    "Replaces:       {}\n");
+        if_not_empty_entries!(enchances,   "Enchances:      {}\n");
+        };
+
+        control
     }
 }
 
@@ -96,7 +128,7 @@ mod tests {
             source: Some("package.tar.gz".to_string()),
             section: Some("devel".to_string()),
             priority: None,
-            installed_size: None,
+            installed_size: Some("1Mb".to_string()),
             homepage: Some("https://github.com/wojciechkepka/debcontrol".to_string()),
             built_using: Some("rustc".to_string()),
             essential: true,
@@ -117,26 +149,26 @@ mod tests {
         const OUT: &str = r#"Package:        debcontrol
 Version:        1
 Architecture:   any
-Maintainer:     Wojciech Kępka <wojciech@wkepka.dev>
 Description:    crate for DEB/control file generation
 Essential:      yes
 Source:         package.tar.gz
 Section:        devel
+Installed-Size: 1Mb
 Homepage:       https://github.com/wojciechkepka/debcontrol
 Built-Using:    rustc
-Pre-Depends: rustc
-Pre-Depends: cargo
-Depends: rustc
-Depends: cargo
-Conflicts: rustc
-Conflicts: cargo
-Provides: rustc
-Provides: cargo
-Provides: debcontrol
-Replaces: rustc
-Replaces: cargo
-Enchances: rustc
-Enchances: cargo
+Pre-Depends:    rustc
+Pre-Depends:    cargo
+Depends:        rustc
+Depends:        cargo
+Conflicts:      rustc
+Conflicts:      cargo
+Provides:       rustc
+Provides:       cargo
+Provides:       debcontrol
+Replaces:       rustc
+Replaces:       cargo
+Enchances:      rustc
+Enchances:      cargo
 "#;
         let got = DebControlBuilder::binary_package_builder("debcontrol")
             .source("package.tar.gz")
@@ -145,6 +177,7 @@ Enchances: cargo
             .maintainer("Wojciech Kępka <wojciech@wkepka.dev>")
             .description("crate for DEB/control file generation")
             .essential(true)
+            .installed_size("1Mb")
             .section("devel")
             .homepage("https://github.com/wojciechkepka/debcontrol")
             .built_using("rustc")
@@ -156,9 +189,9 @@ Enchances: cargo
             .add_enchances_entries(vec!["rustc", "cargo"])
             .add_provides_entries(vec!["debcontrol"])
             .build();
-        dbg!(got.clone().render().unwrap());
+        println!("{}", got.render());
 
         assert_eq!(expect, got);
-        assert_eq!(OUT, got.render().unwrap());
+        assert_eq!(OUT, got.render());
     }
 }

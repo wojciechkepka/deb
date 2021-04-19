@@ -4,17 +4,6 @@ pub mod source;
 use binary::{BinaryDebControl, BinaryDebControlBuilder};
 use source::{SourceDebControl, SourceDebControlBuilder};
 
-use std::io;
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum DebControlError {
-    #[error("failed to render template - {0}")]
-    TemplateRenderError(#[from] sailfish::RenderError),
-    #[error("failed to save template - {0}")]
-    TemplateSaveError(#[from] io::Error),
-}
-
 pub struct DebControlBuilder {}
 impl DebControlBuilder {
     pub fn source_package_builder<S>(name: S) -> SourceDebControlBuilder
