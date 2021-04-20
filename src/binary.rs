@@ -82,9 +82,16 @@ Essential:      {}
         macro_rules! if_not_empty_entries {
             ($field:ident, $fmt:expr) => {
                 if !self.$field.is_empty() {
-                    for entry in self.$field.iter() {
-                        control.push_str(&format!($fmt, entry));
+                    let last = self.$field.len() - 1;
+                    let mut entries = String::new();
+                    for (i, entry) in self.$field.iter().enumerate() {
+                        entries.push_str(entry);
+                        if i != last {
+                            entries.push_str(", ");
+                        }
                     }
+
+                    control.push_str(&format!($fmt, entries));
                 }
             };
         }
@@ -156,19 +163,12 @@ Section:        devel
 Installed-Size: 1Mb
 Homepage:       https://github.com/wojciechkepka/debcontrol
 Built-Using:    rustc
-Pre-Depends:    rustc
-Pre-Depends:    cargo
-Depends:        rustc
-Depends:        cargo
-Conflicts:      rustc
-Conflicts:      cargo
-Provides:       rustc
-Provides:       cargo
-Provides:       debcontrol
-Replaces:       rustc
-Replaces:       cargo
-Enchances:      rustc
-Enchances:      cargo
+Pre-Depends:    rustc, cargo
+Depends:        rustc, cargo
+Conflicts:      rustc, cargo
+Provides:       rustc, cargo, debcontrol
+Replaces:       rustc, cargo
+Enchances:      rustc, cargo
 "#;
         let got = DebControlBuilder::binary_package_builder("debcontrol")
             .source("package.tar.gz")
