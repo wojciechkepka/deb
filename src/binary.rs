@@ -15,12 +15,12 @@ pub struct BinaryDebControl {
     ///  - `all` which indicates an architecture-independent package
     ///  - `source` which indicates a source package
     architecture: String,
-    /// The package maintainer’s name and email address. The name must come first, then the email address inside angle
-    /// brackets <> (in RFC822 format).
-    maintainer: String,
     /// Description of the package
     description: String,
 
+    /// The package maintainer’s name and email address. The name must come first, then the email address inside angle
+    /// brackets <> (in RFC822 format).
+    maintainer: Option<String>,
     /// This field identifies the source package name
     source: Option<String>,
     /// This field specifies an application area into which the package has been classified
@@ -98,6 +98,7 @@ Essential:      {}
 
         #[rustfmt::skip]
         {
+        if_some_push!(maintainer,          "Maintainer:     {}\n");
         if_some_push!(source,              "Source:         {}\n");
         if_some_push!(section,             "Section:        {}\n");
         if_some_push!(priority,            "Priority:       {}\n");
@@ -130,7 +131,7 @@ mod tests {
             package: "debcontrol".to_string(),
             version: "1".to_string(),
             architecture: "any".to_string(),
-            maintainer: "Wojciech Kępka <wojciech@wkepka.dev>".to_string(),
+            maintainer: Some("Wojciech Kępka <wojciech@wkepka.dev>".to_string()),
             description: "crate for DEB/control file generation".to_string(),
             source: Some("package.tar.gz".to_string()),
             section: Some("devel".to_string()),
@@ -158,6 +159,7 @@ Version:        1
 Architecture:   any
 Description:    crate for DEB/control file generation
 Essential:      yes
+Maintainer:     Wojciech Kępka <wojciech@wkepka.dev>
 Source:         package.tar.gz
 Section:        devel
 Installed-Size: 1Mb
