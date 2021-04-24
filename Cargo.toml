@@ -8,4 +8,4 @@ license = "MIT"
 
 [dependencies]
 paste = "1"
-pkgspec = { git = "https://github.com/wojciechkepka/pkgspec", branch = "master" }
+pkgspec = "0.2"
