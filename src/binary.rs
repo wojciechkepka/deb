@@ -18,8 +18,12 @@ pub struct BinaryDebControl {
     /// Description of the package
     description: String,
 
+    /// This part of the version number specifies the version of the Debian package based on the upstream version
+    revision: Option<String>,
+    /// Epochs can help when the upstream version numbering scheme changes, but they must be used with care
+    epoch: Option<String>,
     /// The package maintainer’s name and email address. The name must come first, then the email address inside angle
-    /// brackets <> (in RFC822 format).
+    /// brackets <> (in RFC822 format)
     maintainer: Option<String>,
     /// This field identifies the source package name
     source: Option<String>,
@@ -57,6 +61,17 @@ impl BinaryDebControl {
     }
 
     pub fn render(&self) -> String {
+        let revision = if let Some(revision) = &self.revision {
+            revision
+        } else {
+            "0"
+        };
+        let version = if let Some(epoch) = &self.epoch {
+            format!("{}:{}-{}", epoch, &self.version, revision)
+        } else {
+            format!("{}-{}", &self.version, revision)
+        };
+
         let mut control = format!(
             r#"Package:        {}
 Version:        {}
@@ -65,7 +80,7 @@ Description:    {}
 Essential:      {}
 "#,
             &self.package,
-            &self.version,
+            version,
             &self.architecture,
             &self.description,
             if self.essential { "yes" } else { "no" }
@@ -129,7 +144,9 @@ mod tests {
     fn builds_and_renders_binary_control() {
         let expect = BinaryDebControl {
             package: "debcontrol".to_string(),
-            version: "1".to_string(),
+            version: "1.0.0".to_string(),
+            revision: None,
+            epoch: None,
             architecture: "any".to_string(),
             maintainer: Some("Wojciech Kępka <wojciech@wkepka.dev>".to_string()),
             description: "crate for DEB/control file generation".to_string(),
@@ -155,7 +172,7 @@ mod tests {
             enchances: vec!["rustc".to_string(), "cargo".to_string()],
         };
         const OUT: &str = r#"Package:        debcontrol
-Version:        1
+Version:        1.0.0-0
 Architecture:   any
 Description:    crate for DEB/control file generation
 Essential:      yes
@@ -174,7 +191,7 @@ Enchances:      rustc, cargo
 "#;
         let got = DebControlBuilder::binary_package_builder("debcontrol")
             .source("package.tar.gz")
-            .version("1")
+            .version("1.0.0")
             .architecture("any")
             .maintainer("Wojciech Kępka <wojciech@wkepka.dev>")
             .description("crate for DEB/control file generation")
@@ -195,5 +212,23 @@ Enchances:      rustc, cargo
 
         assert_eq!(expect, got);
         assert_eq!(OUT, got.render());
+    }
+
+    #[test]
+    fn constructs_correct_version() {
+        static EXPECT: &str = r#"Package:        test
+Version:        42:1.0.0-5
+Architecture:   
+Description:    
+Essential:      no
+"#;
+
+        let got = DebControlBuilder::binary_package_builder("test")
+            .version("1.0.0")
+            .revision("5")
+            .epoch("42")
+            .build()
+            .render();
+        assert_eq!(EXPECT, got);
     }
 }
